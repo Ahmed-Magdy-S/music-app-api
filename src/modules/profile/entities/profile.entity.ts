@@ -1,16 +1,18 @@
+import { User } from 'src/modules/auth/entities/user.entity';
 import { Gender } from 'src/modules/common/enums/gender.enum';
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne } from 'typeorm';
 
 
 @Entity("profiles")
+@Unique(["phone"])
 export class Profile {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column()
+    @Column("text")
     firstName: string;
 
-    @Column()
+    @Column("text")
     lastName: string;
 
     @Column({ type: "enum", enum: Gender, array: false })
@@ -19,15 +21,18 @@ export class Profile {
     @Column("integer")
     age: number;
 
-    @Column()
+    @Column("text")
     country: string;
 
-    @Column()
+    @Column("text")
     city: string;
 
-    @Column()
+    @Column("text")
     address: string;
 
-    @Column()
+    @Column("text")
     phone: string;
+    
+    @OneToOne(() => User, user => user.profile)
+    user: User;
 }

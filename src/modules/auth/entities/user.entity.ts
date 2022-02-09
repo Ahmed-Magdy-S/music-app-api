@@ -1,9 +1,12 @@
 import { Auth } from 'src/modules/common/classes/auth';
 import { Role } from 'src/modules/common/enums/role.enum';
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, JoinColumn } from 'typeorm';
+import { Profile } from 'src/modules/profile/entities/profile.entity';
 import * as bcrypt from "bcryptjs"
 
 @Entity("users")
+@Unique(["email", "username"])
+
 export class User {
     @PrimaryGeneratedColumn()
     id: number;
@@ -32,6 +35,10 @@ export class User {
 
     @Column("simple-json")
     auth: Auth;
+
+    @OneToOne(() => Profile, profile => profile.user)
+    @JoinColumn()
+    profile: Profile;
 
     async validatePassword(enteredPassword: string): Promise<boolean> {
         const hash = await bcrypt.hash(enteredPassword, this.salt)

@@ -1,0 +1,28 @@
+import { Column, PrimaryGeneratedColumn, Entity, BaseEntity } from "typeorm";
+import { ArtistType } from "../enums/artist-type.enum";
+import { Gender } from "../enums/gender.enum";
+
+export abstract class AbstractArtist extends BaseEntity {
+
+    @PrimaryGeneratedColumn()
+    id: number;
+
+    @Column()
+    name: string
+
+    @Column()
+    info: string
+
+    @Column()
+    image: string
+
+    @Column({ type: "enum", enum: ArtistType, array: false })
+    type: ArtistType
+
+    @Column({ type: "enum", enum: Gender, array: false })
+    gender: Gender
+
+    @Column()
+    nationality: string
+
+}
