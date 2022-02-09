@@ -13,6 +13,7 @@ import { MusicModule } from './modules/music/music.module';
 import { SingerAlbumModule } from './modules/singer-album/singer-album.module';
 import { MusicianAlbumModule } from './modules/musician-album/musician-album.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { TrackModule } from './modules/track/track.module';
 
 
 @Module({
@@ -21,8 +22,8 @@ import { NotificationModule } from './modules/notification/notification.module';
       type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'ahmed_magdy_s',
-      password: 'ashram.19',
+      username: 'ahmed',
+      password: '0000',
       database: 'music app',
       entities: [__dirname + "/**/*.entity{.ts,.js}"],
       synchronize: true,
@@ -38,6 +39,7 @@ import { NotificationModule } from './modules/notification/notification.module';
     SingerAlbumModule,
     MusicianAlbumModule,
     NotificationModule,
+    TrackModule,
   ],
   controllers: [AppController],
   providers: [AppService],

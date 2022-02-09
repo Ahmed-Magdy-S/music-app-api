@@ -1,8 +1,9 @@
 import { Auth } from 'src/modules/common/classes/auth';
 import { Role } from 'src/modules/common/enums/role.enum';
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, JoinColumn, OneToMany } from 'typeorm';
 import { Profile } from 'src/modules/profile/entities/profile.entity';
 import * as bcrypt from "bcryptjs"
+import { Playlist } from 'src/modules/playlist/playlist.entity';
 
 @Entity("users")
 @Unique(["email", "username"])
@@ -39,6 +40,9 @@ export class User {
     @OneToOne(() => Profile, profile => profile.user)
     @JoinColumn()
     profile: Profile;
+
+    @OneToMany(() => Playlist, playlist => playlist.user, {eager: true})
+    playlists: Playlist[]
 
     async validatePassword(enteredPassword: string): Promise<boolean> {
         const hash = await bcrypt.hash(enteredPassword, this.salt)
