@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Music } from './music.entity';
+import { MusicRepository } from './music.repo';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Music])]
+    imports: [TypeOrmModule.forFeature([MusicRepository])]
 })
 export class MusicModule {}
