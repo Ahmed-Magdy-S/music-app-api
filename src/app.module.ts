@@ -1,6 +1,4 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProfileModule } from './modules/profile/profile.module';
@@ -14,6 +12,7 @@ import { SingerAlbumModule } from './modules/singer-album/singer-album.module';
 import { MusicianAlbumModule } from './modules/musician-album/musician-album.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { TrackModule } from './modules/track/track.module';
+import { MusicianAlbumController } from './modules/singer-musician/musician-album.controller';
 
 
 @Module({
@@ -22,8 +21,8 @@ import { TrackModule } from './modules/track/track.module';
       type: 'postgres',
       host: 'localhost',
       port: 5432,
-      username: 'ahmed',
-      password: '0000',
+      username: 'ahmed_magdy_s',
+      password: 'ashram.19',
       database: 'music app',
       entities: [__dirname + "/**/*.entity{.ts,.js}"],
       synchronize: true,
@@ -41,7 +40,6 @@ import { TrackModule } from './modules/track/track.module';
     NotificationModule,
     TrackModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [MusicianAlbumController]
 })
 export class AppModule { }

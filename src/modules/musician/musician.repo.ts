@@ -13,7 +13,7 @@ export class MusicianRepository extends Repository<Musician> {
         const musicians = await query.leftJoinAndSelect("musician.albums", "musician-albums").getMany()
         return musicians
     }
-
+ 
     async getFilteredMusicians(limit: number, nationality: string, type: ArtistType, gender: Gender): Promise<Musician[]> {
         const query = this.createQueryBuilder("musician")
 
