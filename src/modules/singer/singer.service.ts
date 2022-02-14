@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { DeleteResult } from 'typeorm';
 import { ArtistType } from '../common/enums/artist-type.enum';
 import { Gender } from '../common/enums/gender.enum';
+import { CreateAlbumDto } from '../shared/dto/create-album.dto';
+import { SingerAlbum } from '../singer-album/singer-album.entity';
 import { Singer } from './singer.entity';
 import { SingerRepository } from './singer.repo';
 
@@ -38,17 +41,45 @@ export class SingerService {
         singer.nationality = nationality
         singer.type = type
         // singer.image = image; to be implement later
-        await singer.save()
-        return singer;
+        const savedSinger = await singer.save()
+        return savedSinger;
     }
 
     //implemented later
-    async createNewAlbum(singerId: number){
-
+    async createNewAlbum(singerId: number, createAlbumDto: CreateAlbumDto): Promise<SingerAlbum> {
+        const singer = await this.getSingerById(singerId)
+        const singerAlbum = new SingerAlbum()
+        const { name } = createAlbumDto
+        singerAlbum.name = name
+        singerAlbum.singer = singer // this will create foreign key
+        singerAlbum.image = singer.image
+        const savedSingerAlbum = await singerAlbum.save()
+        return savedSingerAlbum
     }
 
 
+    async updateSinger(id: number, name: string, info: string, gender: Gender, nationality: string, type: ArtistType, image: any): Promise<Singer> {
 
+        const singer = await this.getSingerById(id)
+        if (!singer) throw new NotFoundException("Singer not found with the id " + id)
+        if (name) singer.name = name
+        if (info) singer.info = info
+        if (gender) singer.gender = gender
+        if (nationality) singer.nationality = nationality
+        if (type) singer.type = type
+
+        // singer.image = image; to be implement later
+        const savedSinger = await singer.save()
+        return savedSinger;
+    }
+
+    async deleteSinger(singerId: number) : Promise<DeleteResult> {
+        const result = await this.singerRepo.delete(singerId)
+        if (result.affected === 0) {
+            throw new NotFoundException("Singer not found with the id " + singerId)
+        }
+        return result
+    }
 
 
 }
