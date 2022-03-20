@@ -1,11 +1,16 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { MusicType } from '../common/enums/music-type.enum';
 import { Music } from './music.entity';
+import { MusicService } from './music.service';
+import { diskStorage } from 'multer';
+import { editFileName } from 'src/helpers/handling-file-upload';
 
 @ApiTags("Musics")
 @Controller('musics')
 export class MusicController {
+    constructor(private musicService: MusicService) { }
 
     //route         api/v1/musics
     //access        Public
@@ -13,7 +18,7 @@ export class MusicController {
     @ApiResponse({ status: 200, description: "All musics are returned successfully", type: Music })
     @Get()
     getAllMusics() {
-        return "all musics"
+        return this.musicService.getAllMusics()
     }
 
     //route         api/v1/musics/:id
@@ -22,7 +27,7 @@ export class MusicController {
     @ApiResponse({ status: 200, description: "A music is returned successfully", type: Music })
     @Get(":id")
     getMusicById(@Param("id") id: number) {
-        return "musics"
+        return this.musicService.getMusicById(id)
     }
 
     //route         api/v1/musics/limited
@@ -31,7 +36,7 @@ export class MusicController {
     @ApiResponse({ status: 200, description: "Limited musics are returned successfully", type: Music })
     @Get("limited")
     getLimtedMusics(@Query("limit") limit: number) {
-        return "limited musics"
+        return this.musicService.getLimitedMusics(limit)
     }
 
     //route         api/v1/musics/filtered
@@ -40,7 +45,7 @@ export class MusicController {
     @ApiResponse({ status: 200, description: "Filtered musics are returned successfully", type: Music })
     @Get("filtered")
     getFilteredMusics(@Query("limit") limit: number, @Query("type") type: MusicType, @Query("rate") rate: number) {
-        return "filtered musics"
+        return this.musicService.getFilteredMusics(limit, type, rate)
     }
 
 
@@ -50,8 +55,15 @@ export class MusicController {
     @ApiOperation({ description: "Update a single music and save it to database.", summary: 'Update a Music' })
     @ApiResponse({ status: 200, description: "A music is updated successfully", type: Music })
     @Put(":id/update")
-    updateMusic(@Param("id") id: number, @Body() musicData: any) {
-        return "update music"
+    @UseInterceptors(FileInterceptor("source", {
+        storage: diskStorage({
+            destination: "./upload/musics",
+            filename: editFileName
+        })
+    }))
+    updateMusic(@Param("id") id: number, @Body() musicData: any, @UploadedFile() source: any) {
+        const { name, description, artist, type } = musicData
+        return this.musicService.updateMusic(id, name, description, artist, type, source.path)
     }
 
     //route         api/v1/musics/:id/delete
@@ -61,7 +73,7 @@ export class MusicController {
     @ApiResponse({ status: 200, description: "A music is deleted successfully", type: Music })
     @Delete(":id/delete")
     deleteMusic(@Param("id") id: number) {
-        return "music is deleted"
+        return this.musicService.deleteMusic(id)
     }
 
 

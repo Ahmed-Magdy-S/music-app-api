@@ -1,12 +1,18 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { SongLanguage } from '../common/enums/song-language.enum';
 import { SongType } from '../common/enums/song-type.enum';
 import { Song } from './song.entity';
+import { SongService } from './song.service';
+import { UpdateSongDto } from './dto/update-song.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { editFileName } from 'src/helpers/handling-file-upload';
 
 @ApiTags("Songs")
 @Controller('songs')
 export class SongController {
-
+    constructor(private songService: SongService) { }
 
     //route         api/v1/songs
     //access        Public
@@ -14,25 +20,26 @@ export class SongController {
     @ApiResponse({ status: 200, description: "All songs are returned successfully", type: Song })
     @Get()
     getAllSongs() {
-        return "all Songs"
+        return this.songService.getAllSongs()
     }
 
     //route         api/v1/songs/:id
     //access        Public
-    @ApiOperation({ description: "Fetching a single song from database.", summary: 'Get a Song' })
+    @ApiOperation({ description: "Fetching a specific single song by id from database.", summary: 'Get a Song' })
     @ApiResponse({ status: 200, description: "A song is returned successfully", type: Song })
     @Get(":id")
     getSongById(@Param("id") id: number) {
-        return "Songs"
+        return this.songService.getSongById(id)
     }
 
     //route         api/v1/songs/limited
     //access        Public
     @ApiOperation({ description: "Fetching limited songs from database.", summary: 'Get Limited Songs' })
     @ApiResponse({ status: 200, description: "Limited songs are returned successfully", type: Song })
-    @Get("limited")
+    @Get("limit")
     getLimtedSongs(@Query("limit") limit: number) {
-        return "limited Songs"
+        console.log(limit)
+        return this.songService.getLimitedSongs(limit)
     }
 
     //route         api/v1/songs/filtered
@@ -40,8 +47,8 @@ export class SongController {
     @ApiOperation({ description: "Fetching filtered songs from database according to some request queries.", summary: 'Get Filtered Songs' })
     @ApiResponse({ status: 200, description: "Filtered songs are returned successfully", type: Song })
     @Get("filtered")
-    getFilteredSongs(@Query("limit") limit: number, @Query("type") type: SongType, @Query("rate") rate: number) {
-        return "filtered Songs"
+    getFilteredSongs(@Query("limit") limit: number, @Query("type") type: SongType, @Query("rate") rate: number, @Query("language") language: SongLanguage) {
+        return this.songService.getFilteredSongs(limit, type, rate, language)
     }
 
 
@@ -51,18 +58,15 @@ export class SongController {
     @ApiOperation({ description: "Update a single song and save it to database.", summary: 'Update a Song' })
     @ApiResponse({ status: 200, description: "A song is updated successfully", type: Song })
     @Put(":id/update")
-    updateSong(@Param("id") id: number, @Body() songData: any) {
-        return "update Song"
-    }
-
-    //route         api/v1/songs/:id/delete
-    //access        Private
-    @ApiBearerAuth()
-    @ApiOperation({ description: "Removing a single song from database.", summary: 'Delete a Song' })
-    @ApiResponse({ status: 200, description: "A song is deleted successfully", type: Song })
-    @Delete(":id/delete")
-    deleteSong(@Param("id") id: number) {
-        return "Song is deleted"
+    @UseInterceptors(FileInterceptor("source", {
+        storage: diskStorage({
+            destination: "./upload/songs",
+            filename: editFileName
+        })
+    }))
+    updateSong(@Param("id") id: number, @Body() songData: UpdateSongDto, @UploadedFile() source: any) {
+        const { name, description, artist, type, language } = songData
+        return this.songService.updateSong(id, name, description, artist, type, language, source.path)
     }
 
 
@@ -90,6 +94,15 @@ export class SongController {
     }
 
 
+    //route         api/v1/songs/:id/delete
+    //access        Private
+    @ApiBearerAuth()
+    @ApiOperation({ description: "Removing a single song from database.", summary: 'Delete a Song' })
+    @ApiResponse({ status: 200, description: "A song is deleted successfully", type: Song })
+    @Delete(":id/delete")
+    deleteSong(@Param("id") id: number) {
+        return this.songService.deleteSong(id)
+    }
 
 
 

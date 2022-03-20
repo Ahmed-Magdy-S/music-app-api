@@ -20,7 +20,7 @@ export abstract class AbstractMusic extends BaseEntity {
     @Column()
     source: string 
 
-    @Column()
+    @Column({default: new Date()})
     publishedIn: Date 
 
     @Column()

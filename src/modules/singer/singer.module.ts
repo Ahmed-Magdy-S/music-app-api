@@ -8,5 +8,5 @@ import { SingerService } from './singer.service';
     imports: [TypeOrmModule.forFeature([SingerRepository])],
     controllers: [SingerController],
     providers: [SingerService]
-})
+}) 
 export class SingerModule {}

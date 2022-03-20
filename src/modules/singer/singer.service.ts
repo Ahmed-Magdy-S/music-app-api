@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult } from 'typeorm';
 import { ArtistType } from '../common/enums/artist-type.enum';
@@ -7,6 +7,7 @@ import { CreateAlbumDto } from '../shared/dto/create-album.dto';
 import { SingerAlbum } from '../singer-album/singer-album.entity';
 import { Singer } from './singer.entity';
 import { SingerRepository } from './singer.repo';
+import * as fs from "fs/promises"
 
 @Injectable()
 export class SingerService {
@@ -40,7 +41,8 @@ export class SingerService {
         singer.gender = gender
         singer.nationality = nationality
         singer.type = type
-        // singer.image = image; to be implement later
+        singer.image = image
+        singer.albums = []
         const savedSinger = await singer.save()
         return savedSinger;
     }
@@ -68,15 +70,22 @@ export class SingerService {
         if (nationality) singer.nationality = nationality
         if (type) singer.type = type
 
-        // singer.image = image; to be implement later
+        if (image) {
+            await fs.unlink(singer.image)
+            singer.image = image
+        }
+
         const savedSinger = await singer.save()
         return savedSinger;
     }
 
-    async deleteSinger(singerId: number) : Promise<DeleteResult> {
+    async deleteSinger(singerId: number): Promise<DeleteResult> {
+        const singer = await this.getSingerById(singerId)
+        if (!singer) throw new NotFoundException("Singer not found with the id " + singerId)
+
         const result = await this.singerRepo.delete(singerId)
         if (result.affected === 0) {
-            throw new NotFoundException("Singer not found with the id " + singerId)
+            throw new InternalServerErrorException("Singer cannot be deleted not found with the id " + singerId)
         }
         return result
     }

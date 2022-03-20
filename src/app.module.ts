@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule, TypeOrmModuleOptions } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { ProfileModule } from './modules/profile/profile.module';
 import { SingerModule } from './modules/singer/singer.module';
@@ -12,20 +13,19 @@ import { SingerAlbumModule } from './modules/singer-album/singer-album.module';
 import { MusicianAlbumModule } from './modules/musician-album/musician-album.module';
 import { NotificationModule } from './modules/notification/notification.module';
 import { TrackModule } from './modules/track/track.module';
+import { MailerModule } from '@nestjs-modules/mailer';
+
+import config from './config/config';
+import { PostgresqlConfigService } from './config/database';
 
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: 'localhost',
-      port: 5432,
-      username: 'ahmed',
-      password: '0000',
-      database: 'music app',
-      entities: [__dirname + "/**/*.entity{.ts,.js}"],
-      synchronize: true,
+    ConfigModule.forRoot({
+      isGlobal: true,
     }),
+    TypeOrmModule.forRootAsync({ useClass: PostgresqlConfigService, inject: [PostgresqlConfigService] }),
+    MailerModule.forRoot(config.NODE_MAILER),
     AuthModule,
     ProfileModule,
     SingerModule,
@@ -38,6 +38,8 @@ import { TrackModule } from './modules/track/track.module';
     MusicianAlbumModule,
     NotificationModule,
     TrackModule,
-  ]
+
+  ],
+  providers: [PostgresqlConfigService]
 })
 export class AppModule { }

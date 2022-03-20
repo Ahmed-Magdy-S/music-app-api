@@ -1,11 +1,19 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CreateAlbumDto } from '../shared/dto/create-album.dto';
+import { CreateSongDto } from '../song/dto/create-song.dto';
 import { Song } from '../song/song.entity';
 import { SingerAlbum } from './singer-album.entity';
+import { SingerAlbumService } from './singer-album.service';
+import { Express } from 'express';
+import { diskStorage } from 'multer';
+import { editFileName } from 'src/helpers/handling-file-upload';
 
 @ApiTags("Singer Albums")
 @Controller('singer-albums')
 export class SingerAlbumController {
+    constructor(private singerAlbumService: SingerAlbumService) { }
 
     //route         api/v1/singer-albums
     //access        Public
@@ -13,7 +21,7 @@ export class SingerAlbumController {
     @ApiResponse({ status: 200, description: "All singer albums are returned successfully", type: SingerAlbum })
     @Get()
     getAllSingerAlbums() {
-        return "Singer Albums"
+        return this.singerAlbumService.getAllSingerAlbums()
     }
 
     //route         api/v1/singer-albums/:id
@@ -22,7 +30,7 @@ export class SingerAlbumController {
     @ApiResponse({ status: 200, description: "A singer album is returned successfully", type: SingerAlbum })
     @Get(":id")
     getSingerAlbumById(@Param("id") id: number) {
-        return "a singer album"
+        return this.getSingerAlbumById(id)
     }
 
     //route         api/v1/singer-albums/:id/new-song
@@ -31,8 +39,16 @@ export class SingerAlbumController {
     @ApiResponse({ status: 201, description: "A song is created successfully", type: Song })
     @ApiBearerAuth()
     @Post(":id/new-song")
-    createNewSong(@Param("id") id: number, @Body() songData: any) {
-        return "a new song is created"
+    @UseInterceptors(FileInterceptor("source", {
+        storage: diskStorage({
+            destination: "./upload/songs",
+            filename: editFileName
+        })
+    }))
+    createNewSong(@Param("id") id: number, @Body() songData: CreateSongDto, @UploadedFile() source: Express.Multer.File) {
+        const { name, description, artist, type, language } = songData
+
+        return this.singerAlbumService.createSong(id, name, description, artist, type, language, source.path)
     }
 
 
@@ -42,8 +58,9 @@ export class SingerAlbumController {
     @ApiResponse({ status: 200, description: "A singer album is updated successfully", type: SingerAlbum })
     @ApiBearerAuth()
     @Put(":id/update")
-    updateAlbum(@Param("id") id: number, @Body() songAlbumData: any) {
-        return "a new song album is updated"
+    updateAlbum(@Param("id") id: number, @Body() singerAlbumData: CreateAlbumDto) {
+
+        return this.singerAlbumService.updateSingerAlbum(id, singerAlbumData)
     }
 
 
@@ -54,7 +71,7 @@ export class SingerAlbumController {
     @ApiBearerAuth()
     @Delete(":id/delete")
     deleteAlbum(@Param("id") id: number) {
-        return "a new song album is deleted"
+        return this.singerAlbumService.deleteSingerAlbum(id)
     }
 
 }

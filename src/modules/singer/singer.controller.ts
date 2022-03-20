@@ -1,5 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, Req, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { diskStorage } from 'multer';
+import { editFileName } from 'src/helpers/handling-file-upload';
 import { ArtistType } from '../common/enums/artist-type.enum';
 import { Gender } from '../common/enums/gender.enum';
 import { CreateAlbumDto } from '../shared/dto/create-album.dto';
@@ -52,9 +55,16 @@ export class SingerController {
     @Post()
     @ApiBearerAuth()
     @ApiOperation({ description: "Create a new singer and add it to database.", summary: 'Create a Singer' })
-    @ApiResponse({ status: 200, description: "A new singer is created successfully", type: Singer })
-    createSinger(@Body() createSingerDto: CreateSingerDto) {
-        return "create singers"
+    @ApiResponse({ status: 201, description: "A new singer is created successfully", type: Singer })
+    @UseInterceptors(FileInterceptor("source", {
+        storage: diskStorage({
+            destination: "./upload/images",
+            filename: editFileName
+        })
+    })) createSinger(@Body() createSingerDto: CreateSingerDto, @UploadedFile() image: any) {
+        const { name, info, nationality, type, gender } = createSingerDto
+
+        return this.singerService.createNewSinger(name, info, gender, nationality, type, image.path)
     }
 
     //route         api/v1/singers/:id
@@ -78,18 +88,23 @@ export class SingerController {
 
     //route         api/v1/singers/:id/update
     //access        Private
-    //implement later
     @Put(":id/update")
     @ApiBearerAuth()
     @ApiOperation({ description: "Update the details of a specific singer.", summary: 'Update Singer' })
     @ApiResponse({ status: 200, description: "A singer has been updated successfully", type: Singer })
-    updateSinger(@Param("id") id: number, @Body() updateSingerDto: UpdateSingerDto) {
-        return "singer updated"
+    @UseInterceptors(FileInterceptor("source", {
+        storage: diskStorage({
+            destination: "./upload/images",
+            filename: editFileName
+        })
+    }))
+    updateSinger(@Param("id") id: number, @Body() updateSingerDto: UpdateSingerDto, @UploadedFile() image: any) {
+        const { name, info, gender, nationality, type } = updateSingerDto
+        return this.singerService.updateSinger(id, name, info, gender, nationality, type, image.path)
     }
 
     //route         api/v1/singers/:id/delete
     //access        Private
-
     @Delete(":id/delete")
     @ApiBearerAuth()
     @ApiOperation({ description: "Delete a specific singer", summary: 'Delete Singer' })

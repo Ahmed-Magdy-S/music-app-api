@@ -2,7 +2,8 @@ import { BadRequestException, ForbiddenException, NotFoundException } from "@nes
 import { EntityRepository, Repository } from "typeorm";
 import { User } from "../entities/user.entity";
 import { Role } from "src/modules/common/enums/role.enum";
-import { EmailLoginDto } from "../dto/emai-login.dto";
+import { EmailLoginDto } from "../dto/email-login.dto";
+import * as bcrypt from "bcryptjs"
 
 @EntityRepository(User)
 export class UserRepository extends Repository<User> {
@@ -15,12 +16,12 @@ export class UserRepository extends Repository<User> {
         return await this.findOne({ username });
     }
 
-    async validateUserPassword(emailLoginDto: EmailLoginDto) {
+    async validateUserPassword(emailLoginDto: EmailLoginDto): Promise<{ email: string, user: User }> {
         const { email, password } = emailLoginDto
         const user = await this.findByEmail(email)
         if (!user) throw new NotFoundException("User is not exist")
 
-        if (user && (await user.validatePassword(password))) return { email, user }
+        if ((await user.validatePassword(password))) return { email, user }
         else throw new BadRequestException("Password is incorrect")
     }
 
@@ -37,7 +38,9 @@ export class UserRepository extends Repository<User> {
         else throw new BadRequestException("Password is incorrect")
     }
 
-
+    async hashPassword(password: string, salt: string): Promise<string> {
+        return await bcrypt.hash(password, salt)
+    }
 
 
 

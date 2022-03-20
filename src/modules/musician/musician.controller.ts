@@ -1,5 +1,8 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { diskStorage } from 'multer';
+import { editFileName } from 'src/helpers/handling-file-upload';
 import { ArtistType } from '../common/enums/artist-type.enum';
 import { Gender } from '../common/enums/gender.enum';
 import { MusicianAlbum } from '../musician-album/musician-album.entity';
@@ -7,10 +10,12 @@ import { CreateAlbumDto } from '../shared/dto/create-album.dto';
 import { CreateMusicianDto } from './dto/create-musician.dto';
 import { UpdateMusicianDto } from './dto/update-musician.dto';
 import { Musician } from './musician.entity';
+import { MusicianService } from './musician.service';
 
 @ApiTags("Musicians")
 @Controller('musicians')
 export class MusicianController {
+    constructor(private musicianService: MusicianService) { }
 
     //route         api/v1/musicians
     //access        Public
@@ -18,7 +23,7 @@ export class MusicianController {
     @ApiOperation({ description: "Fetching all musicians from database.", summary: 'Get all Musicians' })
     @ApiResponse({ status: 200, description: "All musicians are returned successfully", type: Musician })
     getAllMusicians() {
-        return "All musicians"
+        return this.musicianService.getAllMusicians()
     }
 
     //route         api/v1/musicians/filtered
@@ -27,7 +32,7 @@ export class MusicianController {
     @ApiOperation({ description: "Fetching all musicians from database with some filtering options.", summary: 'Get Filtered Musicians' })
     @ApiResponse({ status: 200, description: "All filtered musicians are returned successfully", type: Musician })
     getFilteredMusicians(@Query("limit") limit: number, @Query("nationality") nationality: string, @Query("type") type: ArtistType, @Query("gender") gender: Gender) {
-        return "filtered musicians"
+        return this.musicianService.getFilteredMusicians(limit, nationality, type, gender)
     }
 
 
@@ -37,7 +42,7 @@ export class MusicianController {
     @ApiOperation({ description: "Fetching limited number of musicians from database.", summary: 'Get Limited Musicians' })
     @ApiResponse({ status: 200, description: "All limited musicians are returned successfully", type: Musician })
     getLimitedMusicians(@Query("limit") limit: number) {
-        return "limited musicians"
+        return this.musicianService.getLimitedMusicians(limit)
     }
 
 
@@ -47,8 +52,17 @@ export class MusicianController {
     @ApiBearerAuth()
     @ApiOperation({ description: "Create a new musician and add it to database.", summary: 'Create a Musician' })
     @ApiResponse({ status: 200, description: "A new musician is created successfully", type: Musician })
-    createMusician(@Body() createMusicianDto: CreateMusicianDto) {
-        return "create musicians"
+    @UseInterceptors(FileInterceptor("source", {
+        storage: diskStorage({
+            destination: "./upload/images",
+            filename: editFileName
+        })
+    }))
+    createMusician(@Body() createMusicianDto: CreateMusicianDto, @UploadedFile() image: any) {
+
+        const { name, info, nationality, type, gender } = createMusicianDto
+
+        return this.musicianService.createNewMusician(name, info, gender, nationality, type, image.path)
     }
 
     //route         api/v1/musicians/:id
@@ -57,7 +71,7 @@ export class MusicianController {
     @ApiOperation({ description: "Get a musician from database by id.", summary: 'Get a Musician' })
     @ApiResponse({ status: 200, description: "A musician is returned successfully", type: Musician })
     getMusicianById(@Param("id") id: number) {
-        return "musician by id"
+        return this.musicianService.getMusicianById(id)
     }
 
     //route         api/v1/musicians/:id/new-album
@@ -76,8 +90,16 @@ export class MusicianController {
     @ApiBearerAuth()
     @ApiOperation({ description: "Update the details of a specific musician.", summary: 'Update Musician' })
     @ApiResponse({ status: 200, description: "A musician has been updated successfully", type: Musician })
-    updateMusician(@Param("id") id: number, @Body() updateMusicianDto: UpdateMusicianDto) {
-        return "musician updated"
+    @UseInterceptors(FileInterceptor("source", {
+        storage: diskStorage({
+            destination: "./upload/images",
+            filename: editFileName
+        })
+    }))
+    updateMusician(@Param("id") id: number, @Body() updateMusicianDto: UpdateMusicianDto ,  @UploadedFile() image: any) {
+        const { name, info, nationality, type, gender } = updateMusicianDto
+
+        return this.musicianService.updateMusician(id,name, info, gender, nationality, type, image.path)
     }
 
     //route         api/v1/musicians/:id/delete
@@ -87,7 +109,7 @@ export class MusicianController {
     @ApiOperation({ description: "Delete a specific musician", summary: 'Delete Musician' })
     @ApiResponse({ status: 200, description: "A musician has been deleted successfully", type: Musician })
     deleteMusician(@Param("id") id: number) {
-        return "musician deleted"
+        return this.musicianService.deleteMusician(id)
     }
 
 

@@ -1,21 +1,20 @@
 import { Auth } from 'src/modules/common/classes/auth';
 import { Role } from 'src/modules/common/enums/role.enum';
-import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, Unique, OneToOne, JoinColumn, OneToMany, BaseEntity } from 'typeorm';
 import { Profile } from 'src/modules/profile/entities/profile.entity';
 import * as bcrypt from "bcryptjs"
 import { Playlist } from 'src/modules/playlist/playlist.entity';
+import { ApiProperty } from '@nestjs/swagger';
 
 @Entity("users")
 @Unique(["email", "username"])
 
-export class User {
+export class User extends BaseEntity {
     @PrimaryGeneratedColumn()
     id: number;
 
-    @Column({ length: 500 })
-    name: string;
-
     @Column('text')
+    @ApiProperty()
     email: string;
 
     @Column('text')
